@@ -1,0 +1,10 @@
+.env*
+.neon
+.next
+.vercel
+.git
+node_modules
+coverage
+*.tsbuildinfo
+prisma/*.db
+prisma/*.db-journal
