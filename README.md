@@ -1,6 +1,8 @@
 # SplitTrack
 
 Simple shared bill tracker for friend groups. Next.js 14 + TypeScript + Prisma + PostgreSQL + Gmail SMTP.
+<img width="1907" height="892" alt="image" src="https://github.com/user-attachments/assets/80091210-e28c-4506-8c0f-17bb892f305d" />
+
 
 **Live:** https://splittrack-green.vercel.app
 
@@ -143,3 +145,5 @@ npm run setup     # one-time env/db/email setup
 npm run seed      # demo data
 npm run deploy    # push env + deploy to Vercel
 ```
+
+Made By Nitin Dhurve 😎
