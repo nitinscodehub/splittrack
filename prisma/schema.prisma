@@ -1,0 +1,227 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum OtpPurpose {
+  SIGNUP
+  RESET
+}
+
+enum SettlementStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+enum GroupRole {
+  OWNER
+  MEMBER
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  name                String
+  email               String    @unique
+  passwordHash        String
+  emailVerified       DateTime?
+  upiId               String?
+  avatarUrl           String?
+  userIdChangedAt     DateTime?
+  reminderHour        Int       @default(9)
+  notifyExpense       Boolean   @default(true)
+  notifySettlement    Boolean   @default(true)
+  notifyFriendRequest Boolean   @default(true)
+  notifyDailyCreditor Boolean   @default(false)
+  remindersOptOut     Boolean   @default(false)
+  lastReminderSentAt  DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  otpCodes               OtpCode[]
+  sentFriendRequests     Friendship[]   @relation("FriendRequester")
+  receivedFriendRequests Friendship[]   @relation("FriendAddressee")
+  invitesSent            Invite[]       @relation("InviteInviter")
+  invitesUsed            Invite[]       @relation("InviteUsedBy")
+  groupsCreated          Group[]        @relation("GroupCreator")
+  groupMemberships       GroupMember[]
+  expensesPaid           Expense[]      @relation("ExpensePayer")
+  expensesCreated        Expense[]      @relation("ExpenseCreator")
+  shares                 ExpenseShare[]
+  settlementsSent        Settlement[]   @relation("SettlementFrom")
+  settlementsReceived    Settlement[]   @relation("SettlementTo")
+  auditLogs              AuditLog[]     @relation("AuditActor")
+  reminderLogs           ReminderLog[]
+
+  @@index([name])
+}
+
+model OtpCode {
+  id          String     @id @default(cuid())
+  email       String
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash    String
+  purpose     OtpPurpose
+  expiresAt   DateTime
+  attempts    Int        @default(0)
+  consumedAt  DateTime?
+  inviteToken String?
+  createdAt   DateTime   @default(now())
+
+  @@index([email, purpose, createdAt])
+  @@index([userId])
+}
+
+model Friendship {
+  id          String           @id @default(cuid())
+  requesterId String
+  addresseeId String
+  requester   User             @relation("FriendRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee   User             @relation("FriendAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status      FriendshipStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  respondedAt DateTime?
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+  @@index([requesterId, status])
+}
+
+model Invite {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  inviterId String
+  inviter   User      @relation("InviteInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  email     String?
+  usedById  String?
+  usedBy    User?     @relation("InviteUsedBy", fields: [usedById], references: [id], onDelete: SetNull)
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+  @@index([inviterId])
+}
+
+model Group {
+  id          String        @id @default(cuid())
+  name        String
+  createdById String
+  createdBy   User          @relation("GroupCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  members     GroupMember[]
+  expenses    Expense[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([createdById])
+}
+
+model GroupMember {
+  id       String    @id @default(cuid())
+  groupId  String
+  userId   String
+  group    Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+
+  @@unique([groupId, userId])
+  @@index([userId])
+}
+
+model Expense {
+  id           String   @id @default(cuid())
+  payerId      String
+  payer        User     @relation("ExpensePayer", fields: [payerId], references: [id], onDelete: Restrict)
+  groupId      String?
+  group        Group?   @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  totalPaise   Int
+  description  String
+  category     String?
+  date         DateTime
+  createdById  String
+  createdBy    User     @relation("ExpenseCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  deletedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shares    ExpenseShare[]
+  auditLogs AuditLog[]
+
+  @@index([payerId, date])
+  @@index([createdById])
+  @@index([groupId, date])
+  @@index([date])
+}
+
+model ExpenseShare {
+  id         String  @id @default(cuid())
+  expenseId  String
+  expense    Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  sharePaise Int
+
+  @@unique([expenseId, userId])
+  @@index([userId])
+}
+
+model Settlement {
+  id          String           @id @default(cuid())
+  fromUserId  String
+  fromUser    User             @relation("SettlementFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId    String
+  toUser      User             @relation("SettlementTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  amountPaise Int
+  status      SettlementStatus @default(PENDING)
+  note        String?
+  confirmedAt DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([fromUserId, status])
+  @@index([toUserId, status])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  entity    String
+  entityId  String
+  action    String
+  actorId   String
+  actor     User     @relation("AuditActor", fields: [actorId], references: [id], onDelete: Restrict)
+  diff      Json
+  expenseId String?
+  expense   Expense? @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId, createdAt])
+  @@index([actorId])
+  @@index([expenseId])
+}
+
+model ReminderLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind       String
+  sentForKey String   @unique
+  sentAt     DateTime @default(now())
+  meta       Json?
+
+  @@index([userId, kind, sentAt])
+}

@@ -1,0 +1,189 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 252 45% 98%;
+    --foreground: 245 28% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 245 28% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 245 28% 12%;
+    --primary: 255 72% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 252 43% 95%;
+    --secondary-foreground: 255 32% 28%;
+    --muted: 250 32% 95%;
+    --muted-foreground: 245 12% 45%;
+    --accent: 262 82% 95%;
+    --accent-foreground: 262 52% 32%;
+    --destructive: 0 74% 53%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 58% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 48%;
+    --warning-foreground: 30 60% 12%;
+    --border: 250 26% 90%;
+    --input: 250 26% 87%;
+    --ring: 255 72% 57%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 246 37% 7%;
+    --foreground: 250 30% 96%;
+    --card: 246 30% 10%;
+    --card-foreground: 250 30% 96%;
+    --popover: 246 30% 10%;
+    --popover-foreground: 250 30% 96%;
+    --primary: 258 90% 70%;
+    --primary-foreground: 250 40% 8%;
+    --secondary: 246 24% 15%;
+    --secondary-foreground: 250 25% 92%;
+    --muted: 246 24% 14%;
+    --muted-foreground: 247 14% 66%;
+    --accent: 255 30% 20%;
+    --accent-foreground: 255 60% 88%;
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 55% 52%;
+    --success-foreground: 150 60% 8%;
+    --warning: 38 92% 58%;
+    --warning-foreground: 30 60% 10%;
+    --border: 246 22% 19%;
+    --input: 246 22% 22%;
+    --ring: 258 90% 70%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.25);
+    color: hsl(var(--foreground));
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-tight;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.25);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.45);
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply border border-white/60 bg-white/70 shadow-card backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04];
+  }
+
+  .glass-strong {
+    @apply border border-white/70 bg-white/85 shadow-card backdrop-blur-2xl dark:border-white/10 dark:bg-[#12101f]/85;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 bg-clip-text text-transparent dark:from-indigo-300 dark:via-violet-300 dark:to-fuchsia-300;
+  }
+
+  .mesh {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(at 12% 18%, hsl(255 90% 72% / 0.28) 0px, transparent 45%),
+      radial-gradient(at 84% 8%, hsl(288 88% 72% / 0.22) 0px, transparent 42%),
+      radial-gradient(at 72% 82%, hsl(224 95% 66% / 0.2) 0px, transparent 48%),
+      radial-gradient(at 24% 92%, hsl(320 85% 72% / 0.16) 0px, transparent 42%);
+  }
+
+  .dark .mesh {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(at 12% 18%, hsl(255 90% 55% / 0.24) 0px, transparent 45%),
+      radial-gradient(at 84% 8%, hsl(288 88% 55% / 0.18) 0px, transparent 42%),
+      radial-gradient(at 72% 82%, hsl(224 95% 55% / 0.16) 0px, transparent 48%),
+      radial-gradient(at 24% 92%, hsl(320 85% 55% / 0.12) 0px, transparent 42%);
+  }
+
+  .grid-pattern {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.55) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.55) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse at center, black 35%, transparent 75%);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--foreground) / 0.06),
+      transparent
+    );
+    animation: shimmer 1.8s infinite;
+  }
+}
+
+@layer utilities {
+  .balance-stripes {
+    background-image: repeating-linear-gradient(
+      -45deg,
+      hsl(var(--primary) / 0.12),
+      hsl(var(--primary) / 0.12) 8px,
+      transparent 8px,
+      transparent 16px
+    );
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
