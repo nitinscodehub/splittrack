@@ -212,7 +212,7 @@ export function DuesQueue({
                         {pendingFromMe ? (
                           <Badge variant="warning">
                             <Clock3 className="size-3" />
-                            Waiting for confirmation
+                            Waiting for a reply
                           </Badge>
                         ) : null}
                         {pendingToMe ? (
@@ -249,7 +249,7 @@ export function DuesQueue({
                         <span className="flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-300">
                           <Clock3 className="size-3.5" />
                           You marked {formatINR(pendingFromMe.amountPaise)} as paid. Waiting for{" "}
-                          {pair.user.name} to confirm.
+                          {pair.user.name} to accept or reject.
                         </span>
                       ) : (
                         <Button size="sm" onClick={() => setSettlePair(pair)}>

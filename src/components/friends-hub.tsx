@@ -41,7 +41,7 @@ import { apiFetch } from "@/lib/client";
 import { formatDate } from "@/lib/date";
 import { cn } from "@/lib/utils";
 import type { AppGroup, AppUser } from "@/types/app";
-import type { FriendRequestView, FriendshipState } from "@/lib/services/friends";
+import type { FriendRequestView, FriendSuggestion, FriendshipState } from "@/lib/services/friends";
 import type { PublicUser } from "@/lib/validators";
 
 interface SearchResult extends PublicUser {
@@ -53,11 +53,13 @@ export function FriendsHub({
   friends,
   requests,
   groups,
+  suggestions,
 }: {
   currentUser: AppUser;
   friends: PublicUser[];
   requests: { incoming: FriendRequestView[]; outgoing: FriendRequestView[] };
   groups: AppGroup[];
+  suggestions: FriendSuggestion[];
 }) {
   const [addOpen, setAddOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
@@ -160,6 +162,8 @@ export function FriendsHub({
 
             <InviteCard currentUser={currentUser} />
           </div>
+
+          <SuggestionsCard suggestions={suggestions} />
         </TabsContent>
 
         <TabsContent value="requests">
@@ -383,6 +387,104 @@ function InviteCard({ currentUser }: { currentUser: AppUser }) {
           sign in.
         </p>
       </div>
+    </Card>
+  );
+}
+
+function SuggestionsCard({ suggestions }: { suggestions: FriendSuggestion[] }) {
+  const router = useRouter();
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const visible = suggestions.filter((suggestion) => !hiddenIds.has(suggestion.id));
+
+  async function add(suggestion: FriendSuggestion) {
+    setPendingId(suggestion.id);
+    try {
+      const response = await apiFetch<{ autoAccepted: boolean }>("/api/friends/request", {
+        method: "POST",
+        body: JSON.stringify({ userId: suggestion.id }),
+      });
+      setHiddenIds((previous) => new Set(previous).add(suggestion.id));
+      toast.success(
+        response.autoAccepted
+          ? `You and ${suggestion.name} are now friends.`
+          : `Friend request sent to ${suggestion.name}.`,
+      );
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not send the request.");
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  return (
+    <Card className="mt-4 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-primary">
+            <Sparkles className="size-3.5" />
+            Suggested for you
+          </div>
+          <h2 className="mt-1 font-display text-lg font-bold">People your friends know</h2>
+          <p className="text-xs text-muted-foreground">
+            Based on mutual friends. Only people connected through your friends appear here.
+          </p>
+        </div>
+        <Badge variant="secondary">{visible.length}</Badge>
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-border/80 px-4 py-6 text-center text-sm text-muted-foreground">
+          No suggestions right now. Add a friend or send an invite to grow your circle.
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {visible.map((suggestion) => {
+            const mutualLabel = `${suggestion.mutualFriends} mutual friend${
+              suggestion.mutualFriends === 1 ? "" : "s"
+            }`;
+            const via =
+              suggestion.mutualFriendNames.length > 0
+                ? ` · via ${suggestion.mutualFriendNames.join(" & ")}`
+                : "";
+
+            return (
+              <div
+                key={suggestion.id}
+                className="flex items-center gap-3 rounded-2xl border border-border/70 bg-muted/20 p-3"
+              >
+                <UserAvatar
+                  name={suggestion.name}
+                  avatarUrl={suggestion.avatarUrl}
+                  className="size-10"
+                  fallbackClassName="text-xs"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">{suggestion.name}</div>
+                  <div className="truncate text-xs text-muted-foreground">@{suggestion.userId}</div>
+                  <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                    {mutualLabel}
+                    {via}
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => add(suggestion)}
+                  disabled={pendingId !== null}
+                >
+                  {pendingId === suggestion.id ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <UserPlus className="size-3.5" />
+                  )}
+                  Add
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </Card>
   );
 }

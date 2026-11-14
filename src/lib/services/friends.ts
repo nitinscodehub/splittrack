@@ -68,6 +68,113 @@ export async function getFriends(userId: string): Promise<PublicUser[]> {
     .map(toPublicUser);
 }
 
+export type FriendSuggestion = PublicUser & {
+  mutualFriends: number;
+  mutualFriendNames: string[];
+};
+
+/**
+ * People followed by the user's friends (second-degree connections).
+ * Only accepted friends are used, and anyone with an existing friendship
+ * request is excluded so the same person is not suggested twice.
+ */
+export async function getFriendSuggestions(
+  userId: string,
+  limit = 8,
+): Promise<FriendSuggestion[]> {
+  const friendships = await prisma.friendship.findMany({
+    where: {
+      status: "ACCEPTED",
+      OR: [{ requesterId: userId }, { addresseeId: userId }],
+    },
+    include: {
+      requester: { select: { id: true, userId: true, name: true, avatarUrl: true } },
+      addressee: { select: { id: true, userId: true, name: true, avatarUrl: true } },
+    },
+  });
+
+  const friendById = new Map<string, PublicUser>();
+  for (const friendship of friendships) {
+    const friend =
+      friendship.requesterId === userId ? friendship.addressee : friendship.requester;
+    friendById.set(friend.id, toPublicUser(friend));
+  }
+  if (friendById.size === 0) return [];
+
+  const existingFriendships = await prisma.friendship.findMany({
+    where: { OR: [{ requesterId: userId }, { addresseeId: userId }] },
+    select: { requesterId: true, addresseeId: true },
+  });
+
+  const excluded = new Set<string>([userId, ...friendById.keys()]);
+  for (const friendship of existingFriendships) {
+    excluded.add(
+      friendship.requesterId === userId ? friendship.addresseeId : friendship.requesterId,
+    );
+  }
+
+  const friendIds = [...friendById.keys()];
+  const friendConnections = await prisma.friendship.findMany({
+    where: {
+      status: "ACCEPTED",
+      OR: [{ requesterId: { in: friendIds } }, { addresseeId: { in: friendIds } }],
+    },
+    select: { requesterId: true, addresseeId: true },
+  });
+
+  const mutualsByCandidate = new Map<string, Set<string>>();
+  for (const connection of friendConnections) {
+    const requesterIsFriend = friendById.has(connection.requesterId);
+    const addresseeIsFriend = friendById.has(connection.addresseeId);
+
+    let candidateId: string | undefined;
+    let mutualFriendId: string | undefined;
+
+    if (requesterIsFriend && !addresseeIsFriend) {
+      candidateId = connection.addresseeId;
+      mutualFriendId = connection.requesterId;
+    } else if (addresseeIsFriend && !requesterIsFriend) {
+      candidateId = connection.requesterId;
+      mutualFriendId = connection.addresseeId;
+    } else {
+      continue;
+    }
+
+    if (!candidateId || !mutualFriendId || excluded.has(candidateId)) continue;
+
+    const mutuals = mutualsByCandidate.get(candidateId) ?? new Set<string>();
+    mutuals.add(mutualFriendId);
+    mutualsByCandidate.set(candidateId, mutuals);
+  }
+
+  if (mutualsByCandidate.size === 0) return [];
+
+  const candidateIds = [...mutualsByCandidate.keys()];
+  const users = await prisma.user.findMany({
+    where: { id: { in: candidateIds }, emailVerified: { not: null } },
+    select: { id: true, userId: true, name: true, avatarUrl: true },
+  });
+
+  return users
+    .map((user) => {
+      const mutualIds = [...(mutualsByCandidate.get(user.id) ?? [])];
+      return {
+        ...toPublicUser(user),
+        mutualFriends: mutualIds.length,
+        mutualFriendNames: mutualIds
+          .map((id) => friendById.get(id)?.name)
+          .filter((name): name is string => Boolean(name))
+          .slice(0, 2),
+      };
+    })
+    .sort(
+      (a, b) =>
+        b.mutualFriends - a.mutualFriends ||
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+    )
+    .slice(0, Math.max(1, Math.min(limit, 20)));
+}
+
 export async function searchUsers(
   actorId: string,
   query: string,

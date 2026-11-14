@@ -26,7 +26,7 @@ export default async function DuesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Payments"
-        description="See who pays whom. Mark a payment, the other person confirms, and the balance updates."
+        description="See who pays whom. Mark a payment, the other person accepts or rejects it, and the balance updates."
       >
         <Button asChild variant="outline">
           <Link href="/activity">
@@ -48,11 +48,11 @@ export default async function DuesPage() {
           </span>
           <span className="flex items-center gap-1.5 text-muted-foreground">
             <ShieldCheck className="size-3.5" />
-            2. The person who gets the money confirms
+            2. The person who gets the money accepts or rejects
           </span>
           <span className="flex items-center gap-1.5 text-muted-foreground">
             <Info className="size-3.5" />
-            3. Only confirmed payments change the balance
+            3. Only accepted payments change the balance
           </span>
         </div>
       </div>
@@ -68,7 +68,8 @@ export default async function DuesPage() {
           <p className="mt-1">
             If Aarav paid ₹500 for you and you paid ₹300 for Aarav, we show one final amount of ₹200
             instead of two confusing entries. A payment does not change the balance until the other
-            person confirms it. Old changes stay in history.
+            person accepts it. If they reject it, the balance stays the same. Old changes stay in
+            history.
           </p>
         </div>
       </Card>

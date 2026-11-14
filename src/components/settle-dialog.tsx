@@ -110,8 +110,8 @@ export function SettleDialog({
             <DialogHeader>
               <DialogTitle>Mark payment to {creditor.name}</DialogTitle>
               <DialogDescription>
-                {creditor.name} will get a request to confirm. The balance changes only after they
-                confirm.
+                {creditor.name} will get a request to accept or reject. The balance changes only
+                after they accept.
               </DialogDescription>
             </DialogHeader>
 
@@ -204,7 +204,7 @@ export function SettleDialog({
               </div>
               <DialogTitle>Payment marked as sent</DialogTitle>
               <DialogDescription>
-                {creditor.name} has been notified. Your balance updates as soon as they confirm.
+                {creditor.name} has been notified. Your balance updates as soon as they accept.
               </DialogDescription>
             </DialogHeader>
 
@@ -244,13 +244,13 @@ export function SettleDialog({
                 <p className="flex items-start gap-2 text-xs text-muted-foreground">
                   <Sparkles className="mt-0.5 size-3.5 shrink-0 text-primary" />
                   Paying through UPI does not confirm automatically. After you pay, {creditor.name}
-                  {" "}will confirm the payment in SplitTrack.
+                  {" "}will accept or reject the payment in SplitTrack.
                 </p>
               </div>
             ) : (
               <p className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
                 {creditor.name} has not added a UPI ID. Pay however you normally do, and they can
-                confirm the waiting payment from their Payments page.
+                accept or reject the waiting payment from their Payments page.
               </p>
             )}
 

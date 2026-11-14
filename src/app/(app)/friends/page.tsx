@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { FriendsHub } from "@/components/friends-hub";
 import { PageHeader } from "@/components/page-header";
 import { getCurrentUser } from "@/lib/session";
-import { getFriendRequests, getFriends } from "@/lib/services/friends";
+import { getFriendRequests, getFriendSuggestions, getFriends } from "@/lib/services/friends";
 import { getGroupsForUser } from "@/lib/services/groups";
 import { redirect } from "next/navigation";
 import type { AppGroup, AppUser } from "@/types/app";
@@ -14,10 +14,11 @@ export default async function FriendsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const [friends, requests, groups] = await Promise.all([
+  const [friends, requests, groups, suggestions] = await Promise.all([
     getFriends(user.id),
     getFriendRequests(user.id),
     getGroupsForUser(user.id),
+    getFriendSuggestions(user.id),
   ]);
 
   const currentUser: AppUser = {
@@ -48,6 +49,7 @@ export default async function FriendsPage() {
         friends={friends}
         requests={requests}
         groups={appGroups}
+        suggestions={suggestions}
       />
     </div>
   );

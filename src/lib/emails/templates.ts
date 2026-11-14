@@ -197,7 +197,7 @@ export function settlementEmail(input: {
   } as const;
 
   const messages = {
-    marked: `<strong>${escapeHtml(input.actorName)}</strong> marked a payment of <strong>${escapeHtml(input.amountFormatted)}</strong> to you as paid. Confirm it once you've received the money.`,
+    marked: `<strong>${escapeHtml(input.actorName)}</strong> marked a payment of <strong>${escapeHtml(input.amountFormatted)}</strong> to you as paid. Accept it once you've received the money, or reject it if something is wrong.`,
     confirmed: `<strong>${escapeHtml(input.actorName)}</strong> confirmed your payment of <strong>${escapeHtml(input.amountFormatted)}</strong>. Your balance has been updated.`,
     rejected: `<strong>${escapeHtml(input.actorName)}</strong> declined the payment of <strong>${escapeHtml(input.amountFormatted)}</strong>. The balance is unchanged — maybe check the details with them.`,
   } as const;
@@ -215,7 +215,7 @@ export function settlementEmail(input: {
             ? `<div style="padding:12px 16px;border-left:3px solid #a855f7;background:#faf5ff;border-radius:8px;color:#4c1d95;font-size:14px;">“${escapeHtml(input.note)}”</div>`
             : ""
         }`,
-      ctaLabel: input.status === "marked" ? "Confirm payment" : "Open SplitTrack",
+      ctaLabel: input.status === "marked" ? "Review payment" : "Open SplitTrack",
       ctaUrl: `${input.appUrl}/dues`,
     }),
     text: textLayout(titles[input.status], [messages[input.status].replace(/<[^>]+>/g, "")], `${input.appUrl}/dues`),

@@ -92,7 +92,11 @@ export async function respondToSettlement(
   const settlement = await prisma.settlement.findUnique({ where: { id: settlementId } });
   if (!settlement) throw new ApiError(404, "Payment not found.", "NOT_FOUND");
   if (settlement.toUserId !== actor.id) {
-    throw new ApiError(403, "Only the person getting the money can confirm this payment.", "FORBIDDEN");
+    throw new ApiError(
+      403,
+      "Only the person getting the money can accept or reject this payment.",
+      "FORBIDDEN",
+    );
   }
   if (settlement.status !== "PENDING") {
     throw new ApiError(409, "This payment was already handled.", "ALREADY_RESOLVED");
