@@ -16,6 +16,7 @@ export default async function SettingsPage() {
     userId: user.userId,
     name: user.name,
     email: user.email,
+    avatarUrl: user.avatarUrl,
     upiId: user.upiId,
     notifyExpense: user.notifyExpense,
     notifySettlement: user.notifySettlement,

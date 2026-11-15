@@ -1,4 +1,5 @@
 import { type Prisma } from "@prisma/client";
+import { deleteManagedAvatar } from "@/lib/storage";
 import { randomToken } from "@/lib/utils";
 import {
   ApiError,
@@ -23,6 +24,7 @@ function safeUser(user: {
   userId: string;
   name: string;
   email: string;
+  avatarUrl: string | null;
   upiId: string | null;
   notifyExpense: boolean;
   notifySettlement: boolean;
@@ -37,6 +39,7 @@ function safeUser(user: {
     userId: user.userId,
     name: user.name,
     email: user.email,
+    avatarUrl: user.avatarUrl,
     upiId: user.upiId,
     notifyExpense: user.notifyExpense,
     notifySettlement: user.notifySettlement,
@@ -162,6 +165,8 @@ export async function DELETE(request: Request): Promise<Response> {
         },
       });
     });
+
+    await deleteManagedAvatar(user.avatarUrl);
 
     const content = accountDeletedEmail({
       name: user.name,

@@ -89,6 +89,8 @@ Script production URL puchega. Pehle check karega ki hosted database URL aur asl
 
 Alternative: Vercel dashboard → **Add New Project** → GitHub repo import → Environment Variables me `.env` ki values paste → Deploy.
 
+Profile photo ke liye Neon Object Storage use hota hai. Neon `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL_S3` aur `AWS_REGION` variables branch me inject karta hai; inke bina app chalega but photo upload disabled rahega.
+
 ### 7. Post-deploy migration + seed
 Build ke time migration automatic chalti hai (`npm run build` me `prisma migrate deploy` hai).
 
@@ -104,6 +106,7 @@ Normal real app ke liye seed mat chalao.
 - [ ] Friend add / invite link kaam kar raha hai
 - [ ] Bill add karke Payments page par balance dikha
 - [ ] Payment mark + doosre person ka confirm kaam kar raha hai
+- [ ] Settings → Profile photo upload, change aur remove kaam kar raha hai
 - [ ] `https://YOUR_APP/api/cron/reminders` ko `Authorization: Bearer YOUR_CRON_SECRET` ke saath call karke 200 response aaya
 - [ ] Vercel Cron daily **03:30 UTC = 09:00 AM IST** par set hai (`vercel.json`)
 - [ ] Signup OTP, reset password OTP aur reminder email Spam me nahi ja rahe

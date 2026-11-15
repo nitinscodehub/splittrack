@@ -142,6 +142,13 @@ export const changePasswordSchema = z.object({
   newPassword: passwordSchema,
 });
 
+export const avatarUploadSchema = z.object({
+  image: z
+    .string({ error: "Choose a photo" })
+    .min(1, "Choose a photo")
+    .max(900_000, "Photo is too large"),
+});
+
 export const deleteAccountSchema = z.object({
   password: z.string().min(1, "Enter your password to confirm"),
 });

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   BellRing,
+  Camera,
   Check,
   KeyRound,
   Loader2,
@@ -42,6 +43,7 @@ export interface SettingsUser {
   userId: string;
   name: string;
   email: string;
+  avatarUrl: string | null;
   upiId: string | null;
   notifyExpense: boolean;
   notifySettlement: boolean;
@@ -54,6 +56,42 @@ export interface SettingsUser {
 
 interface UpdateResponse {
   user: SettingsUser;
+}
+
+async function fileToAvatarDataUrl(file: File): Promise<string> {
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error("Could not read that photo. Try a JPG, PNG or WebP.");
+  }
+
+  try {
+    const side = Math.min(bitmap.width, bitmap.height);
+    const canvas = document.createElement("canvas");
+    canvas.width = 320;
+    canvas.height = 320;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Could not read this photo.");
+
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, 320, 320);
+    context.drawImage(
+      bitmap,
+      (bitmap.width - side) / 2,
+      (bitmap.height - side) / 2,
+      side,
+      side,
+      0,
+      0,
+      320,
+      320,
+    );
+
+    return canvas.toDataURL("image/jpeg", 0.86);
+  } finally {
+    bitmap.close();
+  }
 }
 
 export function SettingsClient({ user }: { user: SettingsUser }) {
@@ -73,6 +111,9 @@ export function SettingsClient({ user }: { user: SettingsUser }) {
   });
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingNotifications, setSavingNotifications] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const [password, setPassword] = useState({ currentPassword: "", newPassword: "", confirm: "" });
   const [savingPassword, setSavingPassword] = useState(false);
@@ -105,6 +146,52 @@ export function SettingsClient({ user }: { user: SettingsUser }) {
       toast.error(error instanceof Error ? error.message : "Could not save your profile.");
     } finally {
       setSavingProfile(false);
+    }
+  }
+
+  async function uploadAvatar(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Choose a JPG, PNG or WebP photo.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("Photo is too large. Choose one under 8 MB.");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const image = await fileToAvatarDataUrl(file);
+      const response = await apiFetch<{ avatarUrl: string }>("/api/me/avatar", {
+        method: "POST",
+        body: JSON.stringify({ image }),
+      });
+      setAvatarUrl(response.avatarUrl);
+      toast.success("Profile photo updated");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not upload the photo.");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
+  async function removeAvatar() {
+    if (!avatarUrl) return;
+    setUploadingAvatar(true);
+    try {
+      await apiFetch("/api/me/avatar", { method: "DELETE" });
+      setAvatarUrl(null);
+      toast.success("Profile photo removed");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not remove the photo.");
+    } finally {
+      setUploadingAvatar(false);
     }
   }
 
@@ -202,16 +289,58 @@ export function SettingsClient({ user }: { user: SettingsUser }) {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <UserAvatar
                 name={profile.name || user.name}
-                avatarUrl={null}
+                avatarUrl={avatarUrl}
                 className="size-20 ring-4 ring-background"
                 fallbackClassName="text-xl"
               />
-              <div className="text-xs text-muted-foreground">
-                <p className="font-semibold text-foreground">Generated avatar</p>
-                <p className="mt-0.5">
-                  SplitTrack creates your gradient avatar from your initials. No uploads needed.
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">Profile photo</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                    Friends see this on bills, payments and friend lists. JPG, PNG or WebP.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                  >
+                    {uploadingAvatar ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="size-3.5" />
+                    )}
+                    {avatarUrl ? "Change photo" : "Upload photo"}
+                  </Button>
+                  {avatarUrl ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeAvatar}
+                      disabled={uploadingAvatar}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Remove
+                    </Button>
+                  ) : null}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  We crop it square and keep it small automatically.
                 </p>
               </div>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={uploadAvatar}
+                className="sr-only"
+                aria-label="Choose profile photo"
+              />
             </div>
 
             <div className="mt-5 grid gap-4">
@@ -308,7 +437,7 @@ export function SettingsClient({ user }: { user: SettingsUser }) {
                 <div className="mt-2 flex items-center gap-3">
                   <UserAvatar
                     name={profile.name || user.name}
-                    avatarUrl={null}
+                    avatarUrl={avatarUrl}
                     className="size-12 ring-white/40"
                     fallbackClassName="text-sm"
                   />
