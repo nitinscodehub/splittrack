@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { User } from "@prisma/client";
 import { ApiError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
@@ -14,7 +15,7 @@ export interface GroupView {
   expenseCount: number;
 }
 
-export async function getGroupsForUser(userId: string): Promise<GroupView[]> {
+export const getGroupsForUser = cache(async (userId: string): Promise<GroupView[]> => {
   const groups = await prisma.group.findMany({
     where: { members: { some: { userId } } },
     include: {
@@ -35,7 +36,7 @@ export async function getGroupsForUser(userId: string): Promise<GroupView[]> {
     members: group.members.map((member) => member.user),
     expenseCount: group._count.expenses,
   }));
-}
+});
 
 async function validateMembers(actorId: string, memberIds: string[]): Promise<string[]> {
   const unique = [...new Set(memberIds)].filter((id) => id !== actorId);

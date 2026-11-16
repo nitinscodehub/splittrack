@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/lib/api";
@@ -48,7 +49,7 @@ export async function getFriendIds(userId: string): Promise<string[]> {
   );
 }
 
-export async function getFriends(userId: string): Promise<PublicUser[]> {
+export const getFriends = cache(async (userId: string): Promise<PublicUser[]> => {
   const friendships = await prisma.friendship.findMany({
     where: {
       status: "ACCEPTED",
@@ -66,7 +67,7 @@ export async function getFriends(userId: string): Promise<PublicUser[]> {
       friendship.requesterId === userId ? friendship.addressee : friendship.requester,
     )
     .map(toPublicUser);
-}
+});
 
 export type FriendSuggestion = PublicUser & {
   mutualFriends: number;

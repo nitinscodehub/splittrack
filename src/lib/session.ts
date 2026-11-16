@@ -1,15 +1,16 @@
+import { cache } from "react";
 import { getServerSession } from "next-auth";
 import type { User } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 
-export async function getCurrentUser(): Promise<User | null> {
+export const getCurrentUser = cache(async (): Promise<User | null> => {
   const session = await getServerSession(authOptions);
   const id = session?.user?.id;
   if (!id) return null;
   return prisma.user.findUnique({ where: { id } });
-}
+});
 
 /** Use inside API route handlers. Throws a 401 ApiError caught by withApi. */
 export async function requireApiUser(): Promise<User> {

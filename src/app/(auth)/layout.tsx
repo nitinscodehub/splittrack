@@ -2,13 +2,14 @@ import { redirect } from "next/navigation";
 import { ArrowUpRight, Check, Sparkles, Wallet } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getCurrentUser } from "@/lib/session";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
-  const user = await getCurrentUser();
-  if (user?.emailVerified) redirect("/dashboard");
+  const session = await getServerSession(authOptions);
+  if (session?.user?.id) redirect("/dashboard");
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[1.05fr_1fr]">

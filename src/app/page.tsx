@@ -24,9 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LandingDemo } from "@/components/landing/landing-demo";
-import { getCurrentUser } from "@/lib/session";
-
-export const dynamic = "force-dynamic";
+import { LandingHeaderActions, LandingHeroCta } from "@/components/landing/landing-auth-actions";
 
 const features = [
   {
@@ -120,10 +118,7 @@ const faqs = [
   },
 ];
 
-export default async function LandingPage() {
-  const user = await getCurrentUser();
-  const signedIn = Boolean(user?.emailVerified);
-
+export default function LandingPage() {
   return (
     <div className="relative min-h-screen overflow-x-clip">
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[42rem] bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.22),transparent_65%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.18),transparent_65%)]" />
@@ -159,26 +154,7 @@ export default async function LandingPage() {
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            {signedIn ? (
-              <Button asChild>
-                <Link href="/dashboard">
-                  Open app
-                  <ArrowRight className="size-4" />
-                </Link>
-              </Button>
-            ) : (
-              <>
-                <Button asChild variant="ghost" className="hidden sm:inline-flex">
-                  <Link href="/login">Sign in</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/signup">
-                    Get started
-                    <ArrowRight className="size-4" />
-                  </Link>
-                </Button>
-              </>
-            )}
+            <LandingHeaderActions />
           </div>
         </div>
       </header>
@@ -205,12 +181,7 @@ export default async function LandingPage() {
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <Button asChild size="lg" className="h-12 px-6">
-                <Link href={signedIn ? "/dashboard" : "/signup"}>
-                  {signedIn ? "Open app" : "Start free"}
-                  <ArrowRight className="size-4" />
-                </Link>
-              </Button>
+              <LandingHeroCta />
               <Button asChild size="lg" variant="outline" className="h-12 px-5">
                 <Link href="#how-it-works">
                   <CheckCircle2 className="size-4" />
@@ -312,7 +283,7 @@ export default async function LandingPage() {
                 a payment — the history remembers.
               </p>
               <Button asChild className="mt-5" variant="outline">
-                <Link href={signedIn ? "/dashboard" : "/signup"}>
+                <Link href="/signup">
                   Try it with your friends
                   <ArrowRight className="size-4" />
                 </Link>
@@ -521,8 +492,8 @@ export default async function LandingPage() {
                   size="lg"
                   className="h-12 bg-white px-6 text-indigo-700 hover:bg-white/90"
                 >
-                  <Link href={signedIn ? "/dashboard" : "/signup"}>
-                    {signedIn ? "Open app" : "Create free account"}
+                  <Link href="/signup">
+                    Create free account
                     <ArrowRight className="size-4" />
                   </Link>
                 </Button>
